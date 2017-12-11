@@ -170,19 +170,6 @@ def cv_split(k):
     X = iris.data
     # print X
     y = iris.target
-    # indices = range(0,len(X))
-    # new_indices = random.sample(indices, 50)
-    # remaining_indices = list(set(indices) - set(new_indices))
-    # print len(remaining_indices)
-    # Array1_X = X[new_indices]
-    # Array1_y = y[new_indices]
-    # indices = remaining_indices
-    # new_indices = random.sample(indices,50)
-    # remaining_indices = list(set(indices) - set(new_indices))
-    # Array2_X = X[new_indices]
-    # Array2_y = y[new_indices]
-    # Array3_X = X[remaining_indices]
-    # Array3_y = y[remaining_indices]
     Combined_Data = zip(X,y)
     np.random.shuffle(Combined_Data)
     X,y = zip(*Combined_Data)
