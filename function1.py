@@ -8,9 +8,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 iris = datasets.load_iris()
 # print iris
-X = iris.data
+# X = iris.data
 # print X
-y = iris.target
+# y = iris.target
 # y = np.array(y, dtype=np.float32)
 # print y
 def generate_abc(N_i):
@@ -44,7 +44,7 @@ def generate_svm(N_i):
 def generate_DT(N_i):
     params_list=[]
     Criterion = ['gini', 'entropy']#also 'chi_square'
-    Minimum_samples_split = range(1, 11)
+    Minimum_samples_split = range(2, 11)
     Max_depth = range(1, 11)
     Min_samples_leaf = range(1, 11)
     Max_leaf_nodes = range(2, 20)
@@ -120,7 +120,7 @@ def GenParams(P, N):
 # print generate_DT(10)
 # print generate_xgboost(10)
 
-def Blend(L, Chi, N):
+def Blend(L, Chi, N, X, y):
     print 'N'
     print N
     rho = 0.7
@@ -162,39 +162,49 @@ def Blend(L, Chi, N):
         temp.append(Object.fit(D_dash,Lables_dash))
     M.append(temp)
 
-    print M
+    return M
 
 # Blend(3, Chi, N_Bold)
 
-def cv_split(k):
-    X = iris.data
-    # print X
-    y = iris.target
+def cv_split(X, y, k):
+    # X = iris.data
+    # y = iris.target
     Combined_Data = zip(X,y)
     np.random.shuffle(Combined_Data)
     X,y = zip(*Combined_Data)
     X = np.array(X)
-    y =np.array(y)
+    y = np.array(y)
     A = np.split(X,k)
     B = np.split(y,k)
-    return [A,B]
+    return A, B
 
-A = cv_split(3)
-# print A[0]
-# print A[1]
-print A[0][0].shape
-print A[1][0].shape
-print A[0][1].shape
-print A[1][1].shape
-print A[0][2].shape
-print A[1][2].shape
-# print A[1][0]
-# print A[1][1]
-# print A[1][2]
-print np.count_nonzero(A[1][0]==0)
-print np.count_nonzero(A[1][0]==1)
-print np.count_nonzero(A[1][0]==2)
-print 'fcdsfvd'
-print np.count_nonzero(A[1][1]==0)
-print np.count_nonzero(A[1][1]==1)
-print np.count_nonzero(A[1][1]==2)
+# A,B = cv_split(3)
+# print B.pop(2)
+def BlendingEnsemble(X, y, k, Chi, N_Bold):
+
+    X_Array, y_Array = cv_split(X, y, k)
+    for i in range(0,k):
+        X_Array_Temp = []
+        y_Array_Temp = []
+        for j in range(0,k):
+            if(j!=i):
+                X_Array_Temp.append(X_Array[j])
+                y_Array_Temp.append(y_Array[j])
+        # del X_Array_Temp[i]
+        data_Training_X = np.concatenate((X_Array_Temp))
+        data_Training_y = np.concatenate((y_Array_Temp))
+        # print type(data_Training_X)
+        # Phi, N_Bold, Chi = GenParams(P, N)
+        Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y)
+        # print data_Training.shape
+        print Models_list
+
+X = iris.data
+y = iris.target
+Phi, N_Bold, Chi = GenParams(P, N)
+# Blend(2, Chi, N_Bold, X, y)
+BlendingEnsemble(iris.data, iris.target, 5, Chi, N_Bold)
+
+# from sklearn.metric import accuracy
+# q=svm.predict(X)
+# print accuracy(q, y)
