@@ -4,6 +4,8 @@ from sklearn import datasets
 import random
 import math
 from sklearn import svm
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
 iris = datasets.load_iris()
 # print iris
 X = iris.data
@@ -46,7 +48,7 @@ def generate_DT(N_i):
     Max_depth = range(1, 11)
     Min_samples_leaf = range(1, 11)
     Max_leaf_nodes = range(2, 20)
-    Max_features = ['auto', 'sqrt', 'log2', 'none']
+    Max_features = ['auto', 'sqrt', 'log2']
     Min_impurity_split = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5]
     for i in range(1, N_i+1):
         dict = {'criterion': Criterion[random.randint(0, len(Criterion)-1)],
@@ -69,7 +71,7 @@ def generate_knn(N_i):
         dict = {'n_neighbors': N_neighbours[random.randint(0, len(N_neighbours)-1)],
          'weights': Weights[random.randint(0, len(Weights)-1)],
          'p': P[random.randint(0, len(P)-1)],
-         'algorithm': Algorithm[random.randint(0, len(Algorithm)-1)], 'njobs': -1
+         'algorithm': Algorithm[random.randint(0, len(Algorithm)-1)], 'n_jobs': -1
          # 'leaf_size': Leaf_size[random.randint(0, len(Leaf_size)-1)]
          }
         params_list.append(dict)
@@ -113,11 +115,14 @@ def GenParams(P, N):
         # print Phi
         return Phi, N_i, Chi
 
-Phi, N_Bold, Chi = GenParams(P, N)
+# Phi, N_Bold, Chi = GenParams(P, N)
+
 # print generate_DT(10)
 # print generate_xgboost(10)
 
 def Blend(L, Chi, N):
+    print 'N'
+    print N
     rho = 0.7
     #Dfw=NUll
     # for i in range(1,l+1):
@@ -133,13 +138,76 @@ def Blend(L, Chi, N):
     Labels_complement = y[remaining_indices]
     # for i in range(0,3):
     M=[]
-    for j in range(0,N[i]):
+    ## SVM
+    temp = []
+    for j in range(0,N[0]):
     # print(Chi[0][0])
-    Object = svm.SVC()
-    Object.set_params(**Chi[0][0])
-    M.append(Object.fit(D_dash,Lables_dash))
+        Object = svm.SVC()
+        Object.set_params(**Chi[0][j])
+        temp.append(Object.fit(D_dash,Lables_dash))
     # print(Object)
-    Object = svm.SVC()
-    Object.set_params(**Chi[0][0])
-    M.append(Object.fit(D_dash,Lables_dash))
-Blend(3, Chi, N_Bold)
+    M.append(temp)
+    ## KNN
+    temp = []
+    for j in range(0,N[1]):
+        Object = KNeighborsClassifier()
+        Object.set_params(**Chi[1][j])
+        temp.append(Object.fit(D_dash,Lables_dash))
+    M.append(temp)
+    ## DecisionTrees
+    temp = []
+    for j in range(0,N[2]):
+        Object = DecisionTreeClassifier()
+        Object.set_params(**Chi[2][j])
+        temp.append(Object.fit(D_dash,Lables_dash))
+    M.append(temp)
+
+    print M
+
+# Blend(3, Chi, N_Bold)
+
+def cv_split(k):
+    X = iris.data
+    # print X
+    y = iris.target
+    # indices = range(0,len(X))
+    # new_indices = random.sample(indices, 50)
+    # remaining_indices = list(set(indices) - set(new_indices))
+    # print len(remaining_indices)
+    # Array1_X = X[new_indices]
+    # Array1_y = y[new_indices]
+    # indices = remaining_indices
+    # new_indices = random.sample(indices,50)
+    # remaining_indices = list(set(indices) - set(new_indices))
+    # Array2_X = X[new_indices]
+    # Array2_y = y[new_indices]
+    # Array3_X = X[remaining_indices]
+    # Array3_y = y[remaining_indices]
+    Combined_Data = zip(X,y)
+    np.random.shuffle(Combined_Data)
+    X,y = zip(*Combined_Data)
+    X = np.array(X)
+    y =np.array(y)
+    A = np.split(X,k)
+    B = np.split(y,k)
+    return [A,B]
+
+A = cv_split(3)
+# print A[0]
+# print A[1]
+print A[0][0].shape
+print A[1][0].shape
+print A[0][1].shape
+print A[1][1].shape
+print A[0][2].shape
+print A[1][2].shape
+# print A[1][0]
+# print A[1][1]
+# print A[1][2]
+print np.count_nonzero(A[1][0]==0)
+print np.count_nonzero(A[1][0]==1)
+print np.count_nonzero(A[1][0]==2)
+print 'fcdsfvd'
+print np.count_nonzero(A[1][1]==0)
+print np.count_nonzero(A[1][1]==1)
+print np.count_nonzero(A[1][1]==2)
