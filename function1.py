@@ -148,42 +148,29 @@ def Build_Models(N, Chi, D, L):
         Object.set_params(**Chi[0][j])
         M.append(Object.fit(D,L))
     # KNN
-    temp = []
     for j in range(0,N[1]):
         Object = KNeighborsClassifier()
         Object.set_params(**Chi[1][j])
         M.append(Object.fit(D,L))
     # DecisionTrees
-    temp = []
     for j in range(0,N[2]):
         Object = DecisionTreeClassifier()
         Object.set_params(**Chi[2][j])
         M.append(Object.fit(D,L))
     return M
+
 def Blend(L, Phi, Chi, N, X, y, Number_of_algo):
-    # print 'N'
-    # print N
     rho = 0.7
-    #Dfw=NUll
-    # for i in range(1,l+1):
     sample_size = int(rho * len(X))
     indices = range(0,len(X))
     new_indices = random.sample(indices, sample_size)
-    # print new_indices
     D_dash = X[new_indices]
     Labels_dash = y[new_indices]
-    # type(Labels_dash)
     remaining_indices = list(set(indices) - set(new_indices))
     D_complement = X[remaining_indices]
     Labels_complement = y[remaining_indices]
     Labels_complement = Labels_complement.reshape(-1,1)
-    # for i in range(0,3):
     M = Build_Models(N, Chi, D_dash, Labels_dash)
-    ## SVM
-    temp = []
-    # print D_dash[0  ]
-
-
     Models_count = len(M)
     # print "Number of Models are " + str(Models_count)
     G_Matrix = G(M, D_complement, Models_count, Number_of_algo, 3)
@@ -198,14 +185,11 @@ def Blend(L, Phi, Chi, N, X, y, Number_of_algo):
     # print Phi['params']
     Object.set_params(**Phi['params'])
     Object.fit(D_fw,Labels_complement)
-    # Object.predict(D_fw)
     return Object
 
 # Blend(3, Chi, N_Bold)
 
 def cv_split(X, y, k):
-    # X = iris.data
-    # y = iris.target
     Combined_Data = zip(X,y)
     np.random.shuffle(Combined_Data)
     X,y = zip(*Combined_Data)
@@ -217,6 +201,7 @@ def cv_split(X, y, k):
 
 # A,B = cv_split(3)
 # print B.pop(2)
+
 def BlendingEnsemble(X, y, k, P, N_Bold):
     r_list = []
     R = 3
