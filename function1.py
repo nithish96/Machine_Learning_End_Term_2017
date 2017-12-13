@@ -6,7 +6,12 @@ import math
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
 iris = datasets.load_iris()
+# Ignoring Warnings
+import warnings
+warnings.filterwarnings("ignore")
+
 # print iris
 # X = iris.data
 # print X
@@ -37,7 +42,8 @@ def generate_svm(N_i):
          'max_iter': float(Max_iter[random.randint(0, len(Max_iter)-1)]),
          'kernel': Kernel[random.randint(0, len(Kernel)-1)],
          'decision_function_shape': Decision_function_shape[random.randint(0, len(Decision_function_shape)-1)],
-         'tol': Tol[random.randint(0, len(Tol)-1)]}
+         'tol': Tol[random.randint(0, len(Tol)-1)],
+         'probability': True}
         params_list.append(dict)
     return params_list
 
@@ -71,7 +77,8 @@ def generate_knn(N_i):
         dict = {'n_neighbors': N_neighbours[random.randint(0, len(N_neighbours)-1)],
          'weights': Weights[random.randint(0, len(Weights)-1)],
          'p': P[random.randint(0, len(P)-1)],
-         'algorithm': Algorithm[random.randint(0, len(Algorithm)-1)], 'n_jobs': -1
+         'algorithm': Algorithm[random.randint(0, len(Algorithm)-1)]
+         # , 'n_jobs': -1
          # 'leaf_size': Leaf_size[random.randint(0, len(Leaf_size)-1)]
          }
         params_list.append(dict)
@@ -140,6 +147,7 @@ def Blend(L, Chi, N, X, y):
     M=[]
     ## SVM
     temp = []
+    # print D_dash[0  ]
     for j in range(0,N[0]):
     # print(Chi[0][0])
         Object = svm.SVC()
@@ -161,8 +169,54 @@ def Blend(L, Chi, N, X, y):
         Object.set_params(**Chi[2][j])
         temp.append(Object.fit(D_dash,Lables_dash))
     M.append(temp)
+    # print D_dash[0]
+    # return M
+    Dash_Data = zip(D_dash, Lables_dash)
+    # print len(Dash_Data)
+    # print Dash_Data
+    # print len(M)
+    # for i in M:
+        # print len(i)
+    # for i in D_dash:
+    Data = D_complement
+    var = Data[0]
+    # print D_dash[0]
+    F_for_all_algo = []
+    for i in M:
+        # print i
+        # F_for_each_algo = []
+        F_for_each_algo = np.empty([len(i),3])
+        for j in range(0,len(i)):
+            np.vstack((F_for_each_algo, i[j].predict_proba(var.reshape(1,-1))))
+            # F_for_each_algo.append(i[j].predict_proba(var.reshape(1,-1)))
+            # print i
+        # print 'Here'
+        # print F_for_each_algo
+        F_for_all_algo.append(F_for_each_algo)
+        # np.append(F_for_all_algo, F_for_each_algo)
+    print "F"
+    print F_for_all_algo
 
-    return M
+    G_for_all_algo = []
+    for i in M:
+        G_for_each_algo = np.empty([1,len(i)])
+        for j in range(0,len(i)):
+            # print i
+            # print i[j].predict(var.reshape(1,-1))
+            G_for_each_algo[0][j] = i[j].predict(var.reshape(1,-1))
+        # print G_for_each_algo
+        G_for_all_algo.append(G_for_each_algo)
+    print "G"
+    print G_for_all_algo
+
+    cross_product_of_G_F = []
+    for i in range(0,len(M)):
+        cross_product_of_G_F.append(np.matmul(G_for_all_algo[i],F_for_all_algo[i]))
+    print "Cross Product"
+    print cross_product_of_G_F
+    print "KNN Model Row"
+    # print M[1]
+    # print cross_product_of_G_F
 
 # Blend(3, Chi, N_Bold)
 
@@ -198,12 +252,15 @@ def BlendingEnsemble(X, y, k, Chi, N_Bold):
         Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y)
         # print data_Training.shape
         print Models_list
-
+    # q = Models_list[1][0].predict(X_Array[k-1])
+    # print accuracy_score(y_Array[k-1],q) * 100
+    q = Models_list[2][0].predict(X_Array[k-1])
+    print accuracy_score(y_Array[k-1],q) * 100
 X = iris.data
 y = iris.target
 Phi, N_Bold, Chi = GenParams(P, N)
-# Blend(2, Chi, N_Bold, X, y)
-BlendingEnsemble(iris.data, iris.target, 5, Chi, N_Bold)
+Blend(2, Chi, N_Bold, X, y)
+# BlendingEnsemble(iris.data, iris.target, 5, Chi, N_Bold)
 
 # from sklearn.metric import accuracy
 # q=svm.predict(X)
