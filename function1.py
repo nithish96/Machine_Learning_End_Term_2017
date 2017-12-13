@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 iris = datasets.load_iris()
+import time
 # Ignoring Warnings
 import warnings
 warnings.filterwarnings("ignore")
@@ -136,21 +137,31 @@ def get_cross_product_FG(count, M, arg, Number_of_algo):
     # print count
     # F_for_all_algo = []
     # print arg
-    F = np.empty([count,3])
+    F = np.empty([count,Number_of_algo])
+    k = 0
     for i in M:
         # print i
         # F_for_each_algo = []
         for j in range(0,len(i)):
-            np.vstack((F, i[j].predict_proba(arg.reshape(1,-1))))
+            # print 'Probability'
+            # print i[j].predict_proba(arg.reshape(1,-1))
+            prob = i[j].predict_proba(arg.reshape(1,-1))
+            # print prob
+            # if(-1.00000000e+000 in prob):
+            #     print "Here"
+            #     print i,j
+            # # np.vstack((F, prob))
+            F[k] = prob
+            k = k + 1
             # F_for_each_algo.append(i[j].predict_proba(var.reshape(1,-1)))
             # print i
         # print 'Here'
         # print F_for_each_algo
         # F_for_all_algo.append(F_for_each_algo)
         # np.append(F_for_all_algo, F_for_each_algo)
-    print "F"
-    print F.shape
-
+    # print "F"
+    # print F.shape
+    # print F
 
     # G_for_all_algo = []
     # G = np.empty([1, count])
@@ -159,12 +170,14 @@ def get_cross_product_FG(count, M, arg, Number_of_algo):
         for j in range(0,len(i)):
             # print i
             # print i[j].predict(var.reshape(1,-1))
+            # print "Predict"
+            # print i[j].predict(arg.reshape(1,-1))
             G_for_each_algo = i[j].predict(arg.reshape(1,-1))
         # print G_for_each_algo
             # np.append(G,G_for_each_algo)
             G.append(G_for_each_algo[0])
-    print "G"
-    print len(G)
+    # print "G"
+    # print len(G)
     # print G
     # print len(G)
     G = one_hot_encode(G, Number_of_algo)
@@ -187,7 +200,7 @@ def get_cross_product_FG(count, M, arg, Number_of_algo):
     # for i in range(0,len(M)):
     #     cross_product_of_G_F.append(np.matmul(G_for_all_algo[i],F_for_all_algo[i]))
     # print cross_product_of_G_F
-    return cross_product_of_G_F
+    return F, G, cross_product_of_G_F
     # print len(cross_product_of_G_F)
     # print "KNN Model Row"
     # print M[1]
@@ -246,17 +259,40 @@ def Blend(L, Chi, N, X, y, Number_of_algo):
     # for i in D_dash:
     # Data = D_complement
     # print D_dash[0]
-    print D_complement.shape
+    # print D_complement.shape
     count = reduce((lambda x,y: x+y),N)
 
-
-    New_features_for_D_complement = np.empty([])
-    # for i in range(0,D_complement.shape[1]):
+    # New_features_for_D_complement = np.empty([])
+    for i in range(0,2):
+        print D_complement[i]
         # print i
-    print D_complement[0]
-    print get_cross_product_FG(count, M, D_complement[0], Number_of_algo)
-    print D_complement[1]
-    print get_cross_product_FG(count, M, D_complement[1], Number_of_algo)
+        # time.sleep(2)
+        output = get_cross_product_FG(count, M, D_complement[i], Number_of_algo)
+        print output[2]
+    # print D_complement[0]
+    # print get_cross_product_FG(count, M, D_complement[0], Number_of_algo)[2]
+    # print M[0][0].predict_proba(D_complement[0].reshape(1,-1))
+    # print "F"
+    # print r[0]
+    # print "G"
+    # print r[1]
+    # print "G*F"
+    # print r[2]
+    # print D_complement[1]
+    # print get_cross_product_FG(count, M, D_complement[1], Number_of_algo)[2]
+    # print M[0][0].predict_proba(D_complement[1].reshape(1,-1))
+    # print "F"
+    # print t[0]
+    # print "G"
+    # print t[1]
+    # print "G*F"
+    # print t[2]
+    # print "F1=F2"
+    # print r[0] == t[0]
+    # print "G1=G2"
+    # print r[1] == t[1]
+    # print "G*F1 = G*F2"
+    # print r[2] == t[2]
 # Blend(3, Chi, N_Bold)
 
 def cv_split(X, y, k):
@@ -276,6 +312,7 @@ def cv_split(X, y, k):
 def BlendingEnsemble(X, y, k, Chi, N_Bold):
 
     X_Array, y_Array = cv_split(X, y, k)
+    # print(X_Array,y_Array)
     for i in range(0,k):
         X_Array_Temp = []
         y_Array_Temp = []
@@ -288,18 +325,32 @@ def BlendingEnsemble(X, y, k, Chi, N_Bold):
         data_Training_y = np.concatenate((y_Array_Temp))
         # print type(data_Training_X)
         # Phi, N_Bold, Chi = GenParams(P, N)
-        Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y)
+        Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y,3)
         # print data_Training.shape
-        print Models_list
+        # print Models_list
     # q = Models_list[1][0].predict(X_Array[k-1])
     # print accuracy_score(y_Array[k-1],q) * 100
-    q = Models_list[2][0].predict(X_Array[k-1])
-    print accuracy_score(y_Array[k-1],q) * 100
+    # q = Models_list[2][0].predict(X_Array[k-1])
+    # print accuracy_score(y_Array[k-1],q) * 100
 X = iris.data
 y = iris.target
 Phi, N_Bold, Chi = GenParams(P, N)
-Blend(2, Chi, N_Bold, X, y, 3)
-# BlendingEnsemble(iris.data, iris.target, 5, Chi, N_Bold)
+
+X_Array, y_Array = cv_split(X, y, 3)
+X_Array_Temp = []
+y_Array_Temp = []
+for j in range(0,3):
+    if(j!=1):
+        X_Array_Temp.append(X_Array[j])
+        y_Array_Temp.append(y_Array[j])
+# del X_Array_Temp[i]
+data_Training_X = np.concatenate((X_Array_Temp))
+data_Training_y = np.concatenate((y_Array_Temp))
+# print type(data_Training_X)
+# Phi, N_Bold, Chi = GenParams(P, N)
+# Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y,3)
+# Blend(2, Chi, N_Bold, data_Training_X, data_Training_y, 3)
+BlendingEnsemble(iris.data, iris.target, 3, Chi, N_Bold)
 
 # from sklearn.metric import accuracy
 # q=svm.predict(X)
