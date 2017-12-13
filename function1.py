@@ -13,32 +13,19 @@ import time
 # Ignoring Warnings
 import warnings
 warnings.filterwarnings("ignore")
-
-# print iris
-# X = iris.data
-# print X
-# y = iris.target
-# y = np.array(y, dtype=np.float32)
-# print y
-def generate_abc(N_i):
-    params_list=[]
-    weight = range(1, 10)
-    height = range(2, 5)
-    for i in range(1, N_i):
-        dict = {'weight': weight[random.randint(0, len(weight)-1)],
-         'height':weight[random.randint(0, len(weight)-1)]}
-        params_list.append(dict)
-    return params_list
+Number_of_algo = 3
 
 def generate_svm(N_i):
+    #Generate sets of random values of Hyperparameters for SVM Algorithm
     params_list=[]
-    C = range(1, 10)
-    Gamma = range(2, 5)
-    Max_iter = range(1,2)
-    Kernel = ['linear', 'poly', 'rbf']
-    Decision_function_shape = ['ovr', 'ovo']
-    Tol = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5]
+    C = range(1, 10) #Define range of values for C
+    Gamma = range(2, 5) #Define range of values for Gamma
+    Max_iter = range(1,2) #Define range of values for Max_iter
+    Kernel = ['linear', 'poly', 'rbf'] #Define range of values for Kernel
+    Decision_function_shape = ['ovr', 'ovo'] #Define range of values for Decision_function_shape
+    Tol = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5] #Define range of values for Tol
     for i in range(1, N_i+1):
+    #For the given length of N_i+1, generate N_i+1 sets of Hyperparameters with values of each parameter picked at random
         dict = {'C': float(C[random.randint(0, len(C)-1)]),
          'gamma': float(Gamma[random.randint(0, len(Gamma)-1)]),
          'max_iter': float(Max_iter[random.randint(0, len(Max_iter)-1)]),
@@ -47,18 +34,20 @@ def generate_svm(N_i):
          'tol': Tol[random.randint(0, len(Tol)-1)],
          'probability': True}
         params_list.append(dict)
-    return params_list
+    return params_list #Return the array of dictionaries where each dictionary is a set of Hyperparameters
 
 def generate_DT(N_i):
+    #Generate sets of random values of Hyperparameters for DT Algorithm
     params_list=[]
-    Criterion = ['gini', 'entropy']#also 'chi_square'
-    Minimum_samples_split = range(2, 11)
-    Max_depth = range(1, 11)
-    Min_samples_leaf = range(1, 11)
-    Max_leaf_nodes = range(2, 20)
-    Max_features = ['auto', 'sqrt', 'log2']
-    Min_impurity_split = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5]
+    Criterion = ['gini', 'entropy']#also 'chi_square' #Define range of values for Criterion
+    Minimum_samples_split = range(2, 11) #Define range of values for Minimum_samples_split
+    Max_depth = range(1, 11) #Define range of values for Max_depth
+    Min_samples_leaf = range(1, 11) #Define range of values for Min_samples_leaf
+    Max_leaf_nodes = range(2, 20) #Define range of values for Max_leaf_nodes
+    Max_features = ['auto', 'sqrt', 'log2'] #Define range of values for Max_features
+    Min_impurity_split = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5] #Define range of values for Min_impurity_split
     for i in range(1, N_i+1):
+    #For the given length of N_i+1, generate N_i+1 sets of Hyperparameters with values of each parameter picked at random
         dict = {'criterion': Criterion[random.randint(0, len(Criterion)-1)],
          'min_samples_split': Minimum_samples_split[random.randint(0, len(Minimum_samples_split)-1)],
          'max_depth': Max_depth[random.randint(0, len(Max_depth)-1)],
@@ -67,16 +56,18 @@ def generate_DT(N_i):
          'max_features': Max_features[random.randint(0, len(Max_features)-1)],
          'min_impurity_split': Min_impurity_split[random.randint(0, len(Min_impurity_split)-1)]}
         params_list.append(dict)
-    return params_list
+    return params_list #Return the array of dictionaries where each dictionary is a set of Hyperparameters
 
 def generate_knn(N_i):
+    #Generate sets of random values of Hyperparameters for KNN Algorithm
     params_list=[]
-    N_neighbours = range(3, 10)
-    Weights = ['distance', 'uniform']
-    P = range(1, 5)
-    Algorithm = ['brute', 'auto', 'ball_tree', 'kd_tree']
+    N_neighbors = range(3, 10) #Define range of values for N_neighbors
+    Weights = ['distance', 'uniform'] #Define range of values for Weights
+    P = range(1, 5) #Define range of values for P
+    Algorithm = ['brute', 'auto', 'ball_tree', 'kd_tree'] #Define range of values for Algorithm
     for i in range(1, N_i+1):
-        dict = {'n_neighbors': N_neighbours[random.randint(0, len(N_neighbours)-1)],
+    #For the given length of N_i+1, generate N_i+1 sets of Hyperparameters with values of each parameter picked at random
+        dict = {'n_neighbors': N_neighbors[random.randint(0, len(N_neighbors)-1)],
          'weights': Weights[random.randint(0, len(Weights)-1)],
          'p': P[random.randint(0, len(P)-1)],
          'algorithm': Algorithm[random.randint(0, len(Algorithm)-1)]
@@ -84,30 +75,29 @@ def generate_knn(N_i):
          # 'leaf_size': Leaf_size[random.randint(0, len(Leaf_size)-1)]
          }
         params_list.append(dict)
-    return params_list
+    return params_list #Return the array of dictionaries where each dictionary is a set of Hyperparameters
 
 def generate_xgboost():
+    #Generate Hyperparameters for XGBoost Algorithm
     params_list=[]
-    Max_depth = range(3, 10 + 1)#in case doesn't work inc step size to 2
-    Booster = ['gbtree', 'gblinear' ]
-    Objective = ['reg:logistic', 'reg:linear', 'binary:logistic']
-    Min_child_weight = range(1, 6) #in case doesn't work inc step size to 2
-    Learning_rate = numpy.arange(0, 0.5, 0.001)
-    # print Learning_rate[3]
-    Gamma = [gm/10 for gm in range(0, 5)]
-    # for i in range(1, N_i):
+    Max_depth = range(3, 10 + 1) #Define range of values for Max_depth
+    Booster = ['gbtree', 'gblinear' ] #Define range of values for Booster
+    Objective = ['reg:logistic', 'reg:linear', 'binary:logistic'] #Define range of values for Objective
+    Min_child_weight = range(1, 6) #Define range of values for Min_child_weight
+    Learning_rate = numpy.arange(0, 0.5, 0.001) #Define range of values for learning_rate
+    Gamma = [gm/10 for gm in range(0, 5)] #Define range of values for Gamma
+    #Generate 1 set of random values of Hyperparameters
     dict = {'params': {'max_depth': Max_depth[random.randint(0, len(Max_depth)-1)],
           'min_child_weight': Min_child_weight[random.randint(0, len(Min_child_weight)-1)],
           'gamma': Gamma[random.randint(0, len(Gamma)-1)],
           # 'booster': Booster[random.randint(0, len(Booster)-1)],
           'objective': Objective[random.randint(0, len(Objective)-1)],
           'learning_rate': Learning_rate[random.randint(0, len(Learning_rate)-1)]}}
-    # params_list.append(dict)
-    return dict
+    return dict #Return the dictionary of the value of Hyperparameters
 
 P = [0.4, 0.4, 0.2]
 N = 10
-# def function1(A1, A2, A3, B, P, N):
+
 def GenParams(P, N):
         distribution = numpy.random.dirichlet(P)
         N_i = distribution * N
@@ -119,15 +109,8 @@ def GenParams(P, N):
         Chi.append(generate_svm(N_i[0]))
         Chi.append(generate_knn(N_i[1]))
         Chi.append(generate_DT(N_i[2]))
-        # print Chi[0][0]
         Phi = generate_xgboost()
-        # print Phi
         return Phi, N_i, Chi
-
-# Phi, N_Bold, Chi = GenParams(P, N)
-
-# print generate_DT(10)
-# print generate_xgboost(10)
 
 def one_hot_encode(A, Dim):
     b = np.zeros((len(A),Dim))
@@ -135,21 +118,14 @@ def one_hot_encode(A, Dim):
     return b
 
 def F(G, Data, Models_count, Number_of_algo):
-    # print Data.shape
-    # print len(G)
     F = np.empty([len(Data),G.shape[1]*Data.shape[1]])
-    # print G.shape[0]
     for i in range(0,Data.shape[1]):
         F_each_datarow = []
-        # print len(G[i])
-        # print len(Data[i])
         for G_each_datapoint in G[i]:
             k = 0
             for D in Data[i]:
-                # print D*G_each_datapoint
                 F_each_datarow.append(D*G_each_datapoint)
         F[i] = F_each_datarow
-    # print F.shape
     return F
 
 def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
@@ -157,41 +133,27 @@ def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
     k = 0
     for D in Data:
         G_each_datarow = []
-        # k = 0
         for i in M:
             temp = i.predict_proba(D.reshape(1,-1))
-            # print temp
             for i in temp[0]:
-                # print i
                 G_each_datarow.append(i)
-                # G[k] = i
-                # k = k+1
         G[k] = G_each_datarow
-    # print len(G)
-    # print len(G)
-    # G = one_hot_encode(G, Number_of_algo)
-    # print F[0]
-    # print G[0]
     return G
-    # print Data.shape
-    # print G.shape
+
 def Build_Models(N, Chi, D, L):
     M = []
+    # SVM
     for j in range(0,N[0]):
-    # print(Chi[0][0])
         Object = svm.SVC()
         Object.set_params(**Chi[0][j])
         M.append(Object.fit(D,L))
-    # print(Object)
-    # M.append(temp)
-    ## KNN
+    # KNN
     temp = []
     for j in range(0,N[1]):
         Object = KNeighborsClassifier()
         Object.set_params(**Chi[1][j])
         M.append(Object.fit(D,L))
-    # M.append(temp)
-    ## DecisionTrees
+    # DecisionTrees
     temp = []
     for j in range(0,N[2]):
         Object = DecisionTreeClassifier()
@@ -236,7 +198,7 @@ def Blend(L, Phi, Chi, N, X, y, Number_of_algo):
     # print Phi['params']
     Object.set_params(**Phi['params'])
     Object.fit(D_fw,Labels_complement)
-    Object.predict(D_fw)
+    # Object.predict(D_fw)
     return Object
 
 # Blend(3, Chi, N_Bold)
@@ -276,17 +238,9 @@ def BlendingEnsemble(X, y, k, P, N_Bold):
             # del X_Array_Temp[i]
             data_Training_X = np.concatenate((X_Array_Temp))
             data_Training_y = np.concatenate((y_Array_Temp))
-            # print type(data_Training_X)
-            # Phi, N_Bold, Chi = GenParams(P, N)
             Blended_Model = Blend(2, Phi, Chi, N, data_Training_X, data_Training_y,3)
             Models_list.append(Blended_Model)
-            # metrics.accuracy_score(Blended_Model
-            # print data_Training.shape
-            # print Models_list
-            # print X_Array[0][0]
             M = Build_Models(N, Chi, X_Array[i], y_Array[i])
-            # Models_count = len(M)
-            Number_of_algo = 3
             G_Matrix = G(M, X_Array[i], len(M), Number_of_algo, 3)
             F_Matrix = F(G_Matrix, X_Array[i], len(M), Number_of_algo)
             test_data_new = np.concatenate((X_Array[i],G_Matrix,F_Matrix),axis=1)
@@ -297,9 +251,12 @@ def BlendingEnsemble(X, y, k, P, N_Bold):
         # print accuracy_score(y_Array[k-1],q) * 100
         r_list.append(np.mean(accuracies))
 
-        print np.mean(accuracies)
+        # print np.mean(accuracies)
     r_star = r_list.index(np.max(r_list))
-    print List_of_inputs[r_star]
+    print r_star
+    # print List_of_inputs[r_star]
+    Output_Model = Blend(2, List_of_inputs[r_star][0], List_of_inputs[r_star][2],List_of_inputs[r_star][1], X, y, 3)
+    return Output_Model
 X = iris.data
 y = iris.target
 # Phi, N_Bold, Chi = GenParams(P, N)
