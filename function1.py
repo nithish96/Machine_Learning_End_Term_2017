@@ -3,6 +3,7 @@ import numpy as np
 from sklearn import datasets
 import random
 import math
+from xgboost.sklearn import XGBClassifier
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -98,7 +99,7 @@ def generate_xgboost():
     dict = {'params': {'max_depth': Max_depth[random.randint(0, len(Max_depth)-1)],
           'min_child_weight': Min_child_weight[random.randint(0, len(Min_child_weight)-1)],
           'gamma': Gamma[random.randint(0, len(Gamma)-1)],
-          'booster': Booster[random.randint(0, len(Booster)-1)],
+          # 'booster': Booster[random.randint(0, len(Booster)-1)],
           'objective': Objective[random.randint(0, len(Objective)-1)],
           'learning_rate': Learning_rate[random.randint(0, len(Learning_rate)-1)]}}
     # params_list.append(dict)
@@ -133,78 +134,47 @@ def one_hot_encode(A, Dim):
     b[np.arange(len(A)),A] = 1
     return b
 
-def get_cross_product_FG(count, M, arg, Number_of_algo):
-    # print count
-    # F_for_all_algo = []
-    # print arg
-    F = np.empty([count,Number_of_algo])
-    k = 0
-    for i in M:
-        # print i
-        # F_for_each_algo = []
-        for j in range(0,len(i)):
-            # print 'Probability'
-            # print i[j].predict_proba(arg.reshape(1,-1))
-            prob = i[j].predict_proba(arg.reshape(1,-1))
-            # print prob
-            # if(-1.00000000e+000 in prob):
-            #     print "Here"
-            #     print i,j
-            # # np.vstack((F, prob))
-            F[k] = prob
-            k = k + 1
-            # F_for_each_algo.append(i[j].predict_proba(var.reshape(1,-1)))
-            # print i
-        # print 'Here'
-        # print F_for_each_algo
-        # F_for_all_algo.append(F_for_each_algo)
-        # np.append(F_for_all_algo, F_for_each_algo)
-    # print "F"
+def F(G, Data, Models_count, Number_of_algo):
+    # print Data.shape
+    # print len(G)
+    F = np.empty([len(Data),G.shape[1]*Data.shape[1]])
+    # print G.shape[0]
+    for i in range(0,Data.shape[1]):
+        F_each_datarow = []
+        # print len(G[i])
+        # print len(Data[i])
+        for G_each_datapoint in G[i]:
+            k = 0
+            for D in Data[i]:
+                # print D*G_each_datapoint
+                F_each_datarow.append(D*G_each_datapoint)
+        F[i] = F_each_datarow
     # print F.shape
-    # print F
+    return F
 
-    # G_for_all_algo = []
-    # G = np.empty([1, count])
-    G = []
-    for i in M:
-        for j in range(0,len(i)):
-            # print i
-            # print i[j].predict(var.reshape(1,-1))
-            # print "Predict"
-            # print i[j].predict(arg.reshape(1,-1))
-            G_for_each_algo = i[j].predict(arg.reshape(1,-1))
-        # print G_for_each_algo
-            # np.append(G,G_for_each_algo)
-            G.append(G_for_each_algo[0])
-    # print "G"
+def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
+    G = np.empty([len(Data),Models_count*Number_of_classes])
+    k = 0
+    for D in Data:
+        G_each_datarow = []
+        # k = 0
+        for i in M:
+            temp = i.predict_proba(D.reshape(1,-1))
+            # print temp
+            for i in temp[0]:
+                # print i
+                G_each_datarow.append(i)
+                # G[k] = i
+                # k = k+1
+        G[k] = G_each_datarow
     # print len(G)
-    # print G
     # print len(G)
-    G = one_hot_encode(G, Number_of_algo)
+    # G = one_hot_encode(G, Number_of_algo)
     # print F[0]
     # print G[0]
-    # print "Cross Product"
-    cross_product_of_G_F = []
-    for each_algo in range(0, F.shape[1]):
-        sum = 0
-        F_column = F[:,each_algo]
-        # print F_column[0]
-        for each_column in range(0, count):
-            sum = sum + reduce((lambda a,b: a+b),np.dot(np.array(G[each_column]), np.array(F_column[each_column])))
-        # print sum
-        cross_product_of_G_F.append(sum)
-        # cross_product_of_G_F.append(np.dot(np.array(G[each_model]), np.array(F[each_model])))
-        # print np.dot(G[0],F[0])
-    # print one_hot_encode(G, 3)
-    # cross_product_of_G_F = []
-    # for i in range(0,len(M)):
-    #     cross_product_of_G_F.append(np.matmul(G_for_all_algo[i],F_for_all_algo[i]))
-    # print cross_product_of_G_F
-    return F, G, cross_product_of_G_F
-    # print len(cross_product_of_G_F)
-    # print "KNN Model Row"
-    # print M[1]
-    # print cross_product_of_G_F
+    return G
+    # print Data.shape
+    # print G.shape
 
 def Blend(L, Chi, N, X, y, Number_of_algo):
     print 'N'
@@ -222,6 +192,7 @@ def Blend(L, Chi, N, X, y, Number_of_algo):
     remaining_indices = list(set(indices) - set(new_indices))
     D_complement = X[remaining_indices]
     Labels_complement = y[remaining_indices]
+    Labels_complement = Labels_complement.reshape(-1,1)
     # for i in range(0,3):
     M=[]
     ## SVM
@@ -231,68 +202,40 @@ def Blend(L, Chi, N, X, y, Number_of_algo):
     # print(Chi[0][0])
         Object = svm.SVC()
         Object.set_params(**Chi[0][j])
-        temp.append(Object.fit(D_dash,Lables_dash))
+        M.append(Object.fit(D_dash,Lables_dash))
     # print(Object)
-    M.append(temp)
+    # M.append(temp)
     ## KNN
     temp = []
     for j in range(0,N[1]):
         Object = KNeighborsClassifier()
         Object.set_params(**Chi[1][j])
-        temp.append(Object.fit(D_dash,Lables_dash))
-    M.append(temp)
+        M.append(Object.fit(D_dash,Lables_dash))
+    # M.append(temp)
     ## DecisionTrees
     temp = []
     for j in range(0,N[2]):
         Object = DecisionTreeClassifier()
         Object.set_params(**Chi[2][j])
-        temp.append(Object.fit(D_dash,Lables_dash))
-    M.append(temp)
-    # print D_dash[0]
-    # return M
-    # Dash_Data = zip(D_dash, Lables_dash)
-    # print len(Dash_Data)
-    # print Dash_Data
-    # print len(M)
-    # for i in M:
-        # print len(i)
-    # for i in D_dash:
-    # Data = D_complement
-    # print D_dash[0]
-    # print D_complement.shape
-    count = reduce((lambda x,y: x+y),N)
+        M.append(Object.fit(D_dash,Lables_dash))
 
-    # New_features_for_D_complement = np.empty([])
-    for i in range(0,2):
-        print D_complement[i]
-        # print i
-        # time.sleep(2)
-        output = get_cross_product_FG(count, M, D_complement[i], Number_of_algo)
-        print output[2]
-    # print D_complement[0]
-    # print get_cross_product_FG(count, M, D_complement[0], Number_of_algo)[2]
-    # print M[0][0].predict_proba(D_complement[0].reshape(1,-1))
-    # print "F"
-    # print r[0]
-    # print "G"
-    # print r[1]
-    # print "G*F"
-    # print r[2]
-    # print D_complement[1]
-    # print get_cross_product_FG(count, M, D_complement[1], Number_of_algo)[2]
-    # print M[0][0].predict_proba(D_complement[1].reshape(1,-1))
-    # print "F"
-    # print t[0]
-    # print "G"
-    # print t[1]
-    # print "G*F"
-    # print t[2]
-    # print "F1=F2"
-    # print r[0] == t[0]
-    # print "G1=G2"
-    # print r[1] == t[1]
-    # print "G*F1 = G*F2"
-    # print r[2] == t[2]
+    Models_count = len(M)
+    print "Number of Models are " + str(Models_count)
+    G_Matrix = G(M, D_complement, Models_count, Number_of_algo, 3)
+    F_Matrix = F(G_Matrix, D_complement, Models_count, Number_of_algo)
+    print G_Matrix.shape, F_Matrix.shape
+    print D_complement.shape, Labels_complement.shape
+    D_fw = np.concatenate((D_complement,G_Matrix,F_Matrix),axis=1)
+    # print Data[0]
+    print D_fw.shape
+    Object = XGBClassifier()
+    # print Object.get_params().keys()
+    # print Phi['params']
+    Object.set_params(**Phi['params'])
+    Object.fit(D_fw,Labels_complement)
+    Object.predict(D_fw)
+    return Object
+
 # Blend(3, Chi, N_Bold)
 
 def cv_split(X, y, k):
@@ -313,6 +256,7 @@ def BlendingEnsemble(X, y, k, Chi, N_Bold):
 
     X_Array, y_Array = cv_split(X, y, k)
     # print(X_Array,y_Array)
+    Models_list = []
     for i in range(0,k):
         X_Array_Temp = []
         y_Array_Temp = []
@@ -325,9 +269,12 @@ def BlendingEnsemble(X, y, k, Chi, N_Bold):
         data_Training_y = np.concatenate((y_Array_Temp))
         # print type(data_Training_X)
         # Phi, N_Bold, Chi = GenParams(P, N)
-        Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y,3)
+        Blended_Model = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y,3)
+        Models_list.append(Blended_Model)
+        # metrics.accuracy_score(Blended_Model
         # print data_Training.shape
         # print Models_list
+    # q = Models_list[i].predict(X_Array[0])
     # q = Models_list[1][0].predict(X_Array[k-1])
     # print accuracy_score(y_Array[k-1],q) * 100
     # q = Models_list[2][0].predict(X_Array[k-1])
@@ -335,17 +282,6 @@ def BlendingEnsemble(X, y, k, Chi, N_Bold):
 X = iris.data
 y = iris.target
 Phi, N_Bold, Chi = GenParams(P, N)
-
-X_Array, y_Array = cv_split(X, y, 3)
-X_Array_Temp = []
-y_Array_Temp = []
-for j in range(0,3):
-    if(j!=1):
-        X_Array_Temp.append(X_Array[j])
-        y_Array_Temp.append(y_Array[j])
-# del X_Array_Temp[i]
-data_Training_X = np.concatenate((X_Array_Temp))
-data_Training_y = np.concatenate((y_Array_Temp))
 # print type(data_Training_X)
 # Phi, N_Bold, Chi = GenParams(P, N)
 # Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y,3)
