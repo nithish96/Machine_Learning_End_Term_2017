@@ -127,7 +127,73 @@ def GenParams(P, N):
 # print generate_DT(10)
 # print generate_xgboost(10)
 
-def Blend(L, Chi, N, X, y):
+def one_hot_encode(A, Dim):
+    b = np.zeros((len(A),Dim))
+    b[np.arange(len(A)),A] = 1
+    return b
+
+def get_cross_product_FG(count, M, arg, Number_of_algo):
+    # print count
+    # F_for_all_algo = []
+    # print arg
+    F = np.empty([count,3])
+    for i in M:
+        # print i
+        # F_for_each_algo = []
+        for j in range(0,len(i)):
+            np.vstack((F, i[j].predict_proba(arg.reshape(1,-1))))
+            # F_for_each_algo.append(i[j].predict_proba(var.reshape(1,-1)))
+            # print i
+        # print 'Here'
+        # print F_for_each_algo
+        # F_for_all_algo.append(F_for_each_algo)
+        # np.append(F_for_all_algo, F_for_each_algo)
+    print "F"
+    print F.shape
+
+
+    # G_for_all_algo = []
+    # G = np.empty([1, count])
+    G = []
+    for i in M:
+        for j in range(0,len(i)):
+            # print i
+            # print i[j].predict(var.reshape(1,-1))
+            G_for_each_algo = i[j].predict(arg.reshape(1,-1))
+        # print G_for_each_algo
+            # np.append(G,G_for_each_algo)
+            G.append(G_for_each_algo[0])
+    print "G"
+    print len(G)
+    # print G
+    # print len(G)
+    G = one_hot_encode(G, Number_of_algo)
+    # print F[0]
+    # print G[0]
+    # print "Cross Product"
+    cross_product_of_G_F = []
+    for each_algo in range(0, F.shape[1]):
+        sum = 0
+        F_column = F[:,each_algo]
+        # print F_column[0]
+        for each_column in range(0, count):
+            sum = sum + reduce((lambda a,b: a+b),np.dot(np.array(G[each_column]), np.array(F_column[each_column])))
+        # print sum
+        cross_product_of_G_F.append(sum)
+        # cross_product_of_G_F.append(np.dot(np.array(G[each_model]), np.array(F[each_model])))
+        # print np.dot(G[0],F[0])
+    # print one_hot_encode(G, 3)
+    # cross_product_of_G_F = []
+    # for i in range(0,len(M)):
+    #     cross_product_of_G_F.append(np.matmul(G_for_all_algo[i],F_for_all_algo[i]))
+    # print cross_product_of_G_F
+    return cross_product_of_G_F
+    # print len(cross_product_of_G_F)
+    # print "KNN Model Row"
+    # print M[1]
+    # print cross_product_of_G_F
+
+def Blend(L, Chi, N, X, y, Number_of_algo):
     print 'N'
     print N
     rho = 0.7
@@ -171,53 +237,26 @@ def Blend(L, Chi, N, X, y):
     M.append(temp)
     # print D_dash[0]
     # return M
-    Dash_Data = zip(D_dash, Lables_dash)
+    # Dash_Data = zip(D_dash, Lables_dash)
     # print len(Dash_Data)
     # print Dash_Data
     # print len(M)
     # for i in M:
         # print len(i)
     # for i in D_dash:
-    Data = D_complement
-    var = Data[0]
+    # Data = D_complement
     # print D_dash[0]
-    F_for_all_algo = []
-    for i in M:
+    print D_complement.shape
+    count = reduce((lambda x,y: x+y),N)
+
+
+    New_features_for_D_complement = np.empty([])
+    # for i in range(0,D_complement.shape[1]):
         # print i
-        # F_for_each_algo = []
-        F_for_each_algo = np.empty([len(i),3])
-        for j in range(0,len(i)):
-            np.vstack((F_for_each_algo, i[j].predict_proba(var.reshape(1,-1))))
-            # F_for_each_algo.append(i[j].predict_proba(var.reshape(1,-1)))
-            # print i
-        # print 'Here'
-        # print F_for_each_algo
-        F_for_all_algo.append(F_for_each_algo)
-        # np.append(F_for_all_algo, F_for_each_algo)
-    print "F"
-    print F_for_all_algo
-
-    G_for_all_algo = []
-    for i in M:
-        G_for_each_algo = np.empty([1,len(i)])
-        for j in range(0,len(i)):
-            # print i
-            # print i[j].predict(var.reshape(1,-1))
-            G_for_each_algo[0][j] = i[j].predict(var.reshape(1,-1))
-        # print G_for_each_algo
-        G_for_all_algo.append(G_for_each_algo)
-    print "G"
-    print G_for_all_algo
-
-    cross_product_of_G_F = []
-    for i in range(0,len(M)):
-        cross_product_of_G_F.append(np.matmul(G_for_all_algo[i],F_for_all_algo[i]))
-    print "Cross Product"
-    print cross_product_of_G_F
-    print "KNN Model Row"
-    # print M[1]
-    # print cross_product_of_G_F
-
+    print D_complement[0]
+    print get_cross_product_FG(count, M, D_complement[0], Number_of_algo)
+    print D_complement[1]
+    print get_cross_product_FG(count, M, D_complement[1], Number_of_algo)
 # Blend(3, Chi, N_Bold)
 
 def cv_split(X, y, k):
@@ -259,7 +298,7 @@ def BlendingEnsemble(X, y, k, Chi, N_Bold):
 X = iris.data
 y = iris.target
 Phi, N_Bold, Chi = GenParams(P, N)
-Blend(2, Chi, N_Bold, X, y)
+Blend(2, Chi, N_Bold, X, y, 3)
 # BlendingEnsemble(iris.data, iris.target, 5, Chi, N_Bold)
 
 # from sklearn.metric import accuracy
