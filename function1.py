@@ -1,6 +1,8 @@
 import numpy
 import numpy as np
 from sklearn import datasets
+import warnings
+warnings.filterwarnings("ignore") #Ignore Deprecation warnings of the paramter min_impurity_split in DecisionTrees
 import random
 import math
 from xgboost.sklearn import XGBClassifier
@@ -10,7 +12,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 import time
 # Ignore Warnings
-import warnings
 
 def generate_svm(N_i):
     '''Generate sets of random values of Hyperparameters for SVM Algorithm'''
@@ -100,7 +101,6 @@ def GenParams(P, N):
          N_i[iter] = math.ceil(N_i[iter])
     N_i = np.array(N_i, dtype=np.int64) #Convert the array into numpy array
     Chi = [] #Array to contain sets of paramters for each algo
-    print N_i
     Chi.append(generate_svm(N_i[0])) #Generate parameter sets for base algorithm SVM
     Chi.append(generate_knn(N_i[1])) #Generate parameter sets for base algorithm KNN
     Chi.append(generate_DT(N_i[2])) #Generate parameter sets for base algorithm DT
@@ -176,11 +176,8 @@ def Blend(Number_of_algo, L, Phi, Chi, N, X, y):
         Labels_complement = Labels_complement.reshape(-1,1) #Convert a one dimensional single array into a two dimensional single array
         M = Build_Models(N, Chi, D_dash, Labels_dash) #Generate models for the sampled indices data
         Models_count = len(M) #Total number of Models
-        # print "Number of Models are " + str(Models_count)
         G_Matrix = G(M, D_complement, Models_count, Number_of_algo, 3) #Generate G
         F_Matrix = F(G_Matrix, D_complement, Models_count, Number_of_algo) #Generate F
-        # print G_Matrix.shape, F_Matrix.shape
-        # print D_complement.shape, Labels_complement.shape
         D_fw_temp = np.concatenate((D_complement,G_Matrix,F_Matrix,Labels_complement), axis=1) #Generate new dataset i.e add the elements of reamining data, F & G row wise
         Levels_D_fw.append(D_fw_temp) #Add each such new dataset for the present Level
 
@@ -188,21 +185,10 @@ def Blend(Number_of_algo, L, Phi, Chi, N, X, y):
      + dNc(Number of columns * Number of models * Number of classes) + 1(Labels columns which is 1)'''
 
     D_fw = np.concatenate(Levels_D_fw, axis=0) #Column wise append all the new datasets generated for each Level
-    # print Data[0]
-    # for i in Levels_D_fw:
-    #     print "shape of each element"
-    #     print i.shape
-    # print "full element shape"
-    # print D_fw.shape
     Object = XGBClassifier() #Create a base algorithm classifier
-    # print Object.get_params().keys()
-    # print Phi['params']
     Object.set_params(**Phi['params']) #Set the randomly generated params for the base algorithm classifier
-    # print D
     Object.fit(D_fw[:,:(D_fw.shape[1]-1)],D_fw[:,[D_fw.shape[1]-1]]) #Train the base algorithm with the new Data
     return Object #Return the trained Model
-
-# Blend(3, Chi, N_Bold)
 
 def cv_split(X, y, k):
     '''Create data for cross validation'''
@@ -214,9 +200,6 @@ def cv_split(X, y, k):
     A = np.split(X,k)
     B = np.split(y,k)
     return A, B #Return array of data split into the given k times
-
-# A,B = cv_split(3)
-# print B.pop(2)
 
 def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
     '''Split the dataset using k-fold cross validation.
@@ -230,7 +213,6 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
         Phi, N, Chi = GenParams(P, N_Bold) #Get Phi, N, Chi
         List_of_inputs.append([Phi,N,Chi]) #Store the Hyperparameters that are used in every iteration
         X_Array, y_Array = cv_split(X, y, k) #Split the data for corss validation
-        # print(X_Array,y_Array)
         Models_list = []
         accuracies = []
         for i in range(0,k):
@@ -261,19 +243,7 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
     Output_Model = Blend(Number_of_algo, L, List_of_inputs[r_star][0], List_of_inputs[r_star][2],List_of_inputs[r_star][1], X, y)
     return Output_Model #Output the best model
 
-# Phi, N_Bold, Chi = GenParams(P, N)
-# print type(data_Training_X)
-# Phi, N_Bold, Chi = GenParams(P, N)
-# Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y,3)
-# Blend(2, Chi, N_Bold, data_Training_X, data_Training_y, 3)
-
-# from sklearn.metric import accuracy
-# q=svm.predict(X)
-# print accuracy(q, y)
-
-
 if __name__ == "__main__":
-    warnings.filterwarnings("ignore") #Ignore Deprecation warnings of the paramter min_impurity_split in DecisionTrees
     Number_of_algo = 3
     P = [0.4, 0.4, 0.2]
     N = 10
