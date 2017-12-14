@@ -45,7 +45,7 @@ def generate_DT(N_i):
     Max_features = ['auto', 'sqrt', 'log2'] #Define range of values for Max_features
     Min_impurity_split = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5] #Define range of values for Min_impurity_split
     for i in range(1, N_i+1):
-    #For the given length of N_i+1, generate N_i+1 sets of Hyperparameters with values of each parameter picked at random
+    #For the given length of N_i, generate N_i sets of Hyperparameters with values of each parameter picked at random
         dict = {'criterion': Criterion[random.randint(0, len(Criterion)-1)],
          'min_samples_split': Minimum_samples_split[random.randint(0, len(Minimum_samples_split)-1)],
          'max_depth': Max_depth[random.randint(0, len(Max_depth)-1)],
@@ -64,7 +64,7 @@ def generate_knn(N_i):
     P = range(1, 5) #Define range of values for P
     Algorithm = ['brute', 'auto', 'ball_tree', 'kd_tree'] #Define range of values for Algorithm
     for i in range(1, N_i+1):
-    #For the given length of N_i+1, generate N_i+1 sets of Hyperparameters with values of each parameter picked at random
+    #For the given length of N_i, generate N_i sets of Hyperparameters with values of each parameter picked at random
         dict = {'n_neighbors': N_neighbors[random.randint(0, len(N_neighbors)-1)],
          'weights': Weights[random.randint(0, len(Weights)-1)],
          'p': P[random.randint(0, len(P)-1)],
