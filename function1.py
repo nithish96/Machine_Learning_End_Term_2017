@@ -23,9 +23,9 @@ def generate_svm(N_i):
     Max_iter = range(1,2) #Define range of values for Max_iter
     Kernel = ['linear', 'poly', 'rbf'] #Define range of values for Kernel
     Decision_function_shape = ['ovr', 'ovo'] #Define range of values for Decision_function_shape
-    Tol = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5] #Define range of values for Tol
+    Tol = [1e-7, 1e-4, 1e-6, 1e-8, 1e-5] #Define range of values for Tolerance
     for i in range(1, N_i+1):
-    #For the given length of N_i+1, generate N_i+1 sets of Hyperparameters with values of each parameter picked at random
+    #For the given length of N_i, generate N_i sets of Hyperparameters with values of each parameter picked at random
         dict = {'C': float(C[random.randint(0, len(C)-1)]),
          'gamma': float(Gamma[random.randint(0, len(Gamma)-1)]),
          'max_iter': float(Max_iter[random.randint(0, len(Max_iter)-1)]),
@@ -99,38 +99,30 @@ P = [0.4, 0.4, 0.2]
 N = 10
 
 def GenParams(P, N):
-        distribution = numpy.random.dirichlet(P)
-        N_i = distribution * N
-        for iter in range(0, len(N_i)):
+        #Generate a set of parameters Phi(For all the base algorithms) and paramters for Chi(For the blender algorithm) and array of count of each base algorithm
+        distribution = numpy.random.dirichlet(P) #Generate Dirchlet distribution for input P
+        N_i = distribution * N #Generate a new set N_i by multiplying N with each value of the distribution
+        for iter in range(0, len(N_i)): #Convert each value to it's ceil value
              N_i[iter] = math.ceil(N_i[iter])
-        N_i = np.array(N_i, dtype=np.int64)
-        Chi = []
+        N_i = np.array(N_i, dtype=np.int64) #Convert the array into numpy array
+        Chi = [] #Array to contain sets of paramters for each algo
         print N_i
-        Chi.append(generate_svm(N_i[0]))
-        Chi.append(generate_knn(N_i[1]))
-        Chi.append(generate_DT(N_i[2]))
-        Phi = generate_xgboost()
-        return Phi, N_i, Chi
+        Chi.append(generate_svm(N_i[0])) #Generate parameter sets for base algorithm SVM
+        Chi.append(generate_knn(N_i[1])) #Generate parameter sets for base algorithm KNN
+        Chi.append(generate_DT(N_i[2])) #Generate parameter sets for base algorithm DT
+        Phi = generate_xgboost() #Generate parameters for blend algorithm XGBoost
+        return Phi, N_i, Chi #Return Phi, N_i & Chi
 
 def one_hot_encode(A, Dim):
+    #Do hot encoding on given input matrix A with the given dimensions Dim
     b = np.zeros((len(A),Dim))
     b[np.arange(len(A)),A] = 1
-    return b
-
-def F(G, Data, Models_count, Number_of_algo):
-    F = np.empty([len(Data),G.shape[1]*Data.shape[1]])
-    for i in range(0,Data.shape[1]):
-        F_each_datarow = []
-        for G_each_datapoint in G[i]:
-            k = 0
-            for D in Data[i]:
-                F_each_datarow.append(D*G_each_datapoint)
-        F[i] = F_each_datarow
-    return F
+    return b #Return the encoded matrix
 
 def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
-    G = np.empty([len(Data),Models_count*Number_of_classes])
-    k = 0
+    #Generate matrix G
+    G = np.empty([len(Data),Models_count*Number_of_classes]) #Size of the G matrix would number of rows = rows in Data, number of columns = Total number of models * number of classes for given dataset
+    #For each model and for each row predict the probability and horizontally append them for each model and vertically for each row
     for D in Data:
         G_each_datarow = []
         for i in M:
@@ -139,6 +131,16 @@ def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
                 G_each_datarow.append(i)
         G[k] = G_each_datarow
     return G
+
+def F(G, Data, Models_count, Number_of_algo):
+    F = np.empty([len(Data),G.shape[1]*Data.shape[1]])
+    for i in range(0,Data.shape[1]):
+        F_each_datarow = []
+        for G_each_datapoint in G[i]:
+            for D in Data[i]:
+                F_each_datarow.append(D*G_each_datapoint)
+                F[i] = F_each_datarow
+                return F
 
 def Build_Models(N, Chi, D, L):
     M = []
@@ -220,7 +222,6 @@ def BlendingEnsemble(X, y, k, P, N_Bold):
                 if(j!=i):
                     X_Array_Temp.append(X_Array[j])
                     y_Array_Temp.append(y_Array[j])
-            # del X_Array_Temp[i]
             data_Training_X = np.concatenate((X_Array_Temp))
             data_Training_y = np.concatenate((y_Array_Temp))
             Blended_Model = Blend(2, Phi, Chi, N, data_Training_X, data_Training_y,3)
@@ -230,20 +231,14 @@ def BlendingEnsemble(X, y, k, P, N_Bold):
             F_Matrix = F(G_Matrix, X_Array[i], len(M), Number_of_algo)
             test_data_new = np.concatenate((X_Array[i],G_Matrix,F_Matrix),axis=1)
             q = Models_list[i].predict(test_data_new)
-            # q = Models_list[1[0].predict(X_Array[k-1])
             accuracies.append(accuracy_score(y_Array[i],q))
-        # q = Models_list[2][0].predict(X_Array[k-1])
-        # print accuracy_score(y_Array[k-1],q) * 100
         r_list.append(np.mean(accuracies))
 
-        # print np.mean(accuracies)
     r_star = r_list.index(np.max(r_list))
     print r_star
-    # print List_of_inputs[r_star]
     Output_Model = Blend(2, List_of_inputs[r_star][0], List_of_inputs[r_star][2],List_of_inputs[r_star][1], X, y, 3)
     return Output_Model
-X = iris.data
-y = iris.target
+
 # Phi, N_Bold, Chi = GenParams(P, N)
 # print type(data_Training_X)
 # Phi, N_Bold, Chi = GenParams(P, N)
