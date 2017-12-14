@@ -10,10 +10,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 iris = datasets.load_iris()
 import time
-# Ignoring Warnings
+#Ignore Deprecation warnings of the paramter min_impurity_split in DecisionTrees
 import warnings
-warnings.filterwarnings("ignore")
-Number_of_algo = 3
 
 def generate_svm(N_i):
     #Generate sets of random values of Hyperparameters for SVM Algorithm
@@ -95,8 +93,6 @@ def generate_xgboost():
           'learning_rate': Learning_rate[random.randint(0, len(Learning_rate)-1)]}}
     return dict #Return the dictionary of the value of Hyperparameters
 
-P = [0.4, 0.4, 0.2]
-N = 10
 
 def GenParams(P, N):
         #Generate a set of parameters Phi(For all the base algorithms) and paramters for Chi(For the blender algorithm) and array of count of each base algorithm
@@ -122,6 +118,7 @@ def one_hot_encode(A, Dim):
 def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
     #Generate matrix G
     G = np.empty([len(Data),Models_count*Number_of_classes]) #Size of the G matrix would number of rows = rows in Data, number of columns = Total number of models * number of classes for given dataset
+    k = 0
     #For each model and for each row predict the probability and horizontally append them for each model and vertically for each row
     for D in Data:
         G_each_datarow = []
@@ -130,19 +127,23 @@ def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
             for i in temp[0]:
                 G_each_datarow.append(i)
         G[k] = G_each_datarow
+        k = k+1
     return G
 
 def F(G, Data, Models_count, Number_of_algo):
-    F = np.empty([len(Data),G.shape[1]*Data.shape[1]])
+    #Generate matrix F
+    F = np.empty([len(Data),G.shape[1]*Data.shape[1]]) #Size of the matrix F would be number of rows = rows in Data, number of columns = number of columns in G * Number of columns in Data
+    #For each element in G and for each element in Data is mutiplied and appended horizontally for each row
     for i in range(0,Data.shape[1]):
         F_each_datarow = []
         for G_each_datapoint in G[i]:
             for D in Data[i]:
                 F_each_datarow.append(D*G_each_datapoint)
-                F[i] = F_each_datarow
-                return F
+        F[i] = F_each_datarow
+    return F
 
 def Build_Models(N, Chi, D, L):
+    #Build models for the given parameters and given base algorithms on a data
     M = []
     # SVM
     for j in range(0,N[0]):
@@ -162,31 +163,42 @@ def Build_Models(N, Chi, D, L):
     return M
 
 def Blend(L, Phi, Chi, N, X, y, Number_of_algo):
+    #Build a new data set with the created F and G matrixes for L levels. Train the Belend algorithm with the new data and it's corresponding parameters
     rho = 0.7
-    sample_size = int(rho * len(X))
-    indices = range(0,len(X))
-    new_indices = random.sample(indices, sample_size)
-    D_dash = X[new_indices]
-    Labels_dash = y[new_indices]
-    remaining_indices = list(set(indices) - set(new_indices))
-    D_complement = X[remaining_indices]
-    Labels_complement = y[remaining_indices]
-    Labels_complement = Labels_complement.reshape(-1,1)
-    M = Build_Models(N, Chi, D_dash, Labels_dash)
-    Models_count = len(M)
-    # print "Number of Models are " + str(Models_count)
-    G_Matrix = G(M, D_complement, Models_count, Number_of_algo, 3)
-    F_Matrix = F(G_Matrix, D_complement, Models_count, Number_of_algo)
-    # print G_Matrix.shape, F_Matrix.shape
-    # print D_complement.shape, Labels_complement.shape
-    D_fw = np.concatenate((D_complement,G_Matrix,F_Matrix),axis=1)
+    Levels_D_fw = []
+    for i in range(0,L):
+        sample_size = int(rho * len(X))
+        indices = range(0,len(X))
+        new_indices = random.sample(indices, sample_size)
+        D_dash = X[new_indices]
+        Labels_dash = y[new_indices]
+        remaining_indices = list(set(indices) - set(new_indices))
+        D_complement = X[remaining_indices]
+        Labels_complement = y[remaining_indices]
+        Labels_complement = Labels_complement.reshape(-1,1)
+        M = Build_Models(N, Chi, D_dash, Labels_dash)
+        Models_count = len(M)
+        # print "Number of Models are " + str(Models_count)
+        G_Matrix = G(M, D_complement, Models_count, Number_of_algo, 3)
+        F_Matrix = F(G_Matrix, D_complement, Models_count, Number_of_algo)
+        # print G_Matrix.shape, F_Matrix.shape
+        # print D_complement.shape, Labels_complement.shape
+        D_fw_temp = np.concatenate((D_complement,G_Matrix,F_Matrix,Labels_complement), axis=1)
+        Levels_D_fw.append(D_fw_temp)
+
+    D_fw = np.concatenate(Levels_D_fw, axis=0)
     # print Data[0]
+    # for i in Levels_D_fw:
+    #     print "shape of each element"
+    #     print i.shape
+    # print "full element shape"
     # print D_fw.shape
     Object = XGBClassifier()
     # print Object.get_params().keys()
     # print Phi['params']
     Object.set_params(**Phi['params'])
-    Object.fit(D_fw,Labels_complement)
+    # print D
+    Object.fit(D_fw[:,:(D_fw.shape[1]-1)],D_fw[:,[D_fw.shape[1]-1]])
     return Object
 
 # Blend(3, Chi, N_Bold)
@@ -224,7 +236,7 @@ def BlendingEnsemble(X, y, k, P, N_Bold):
                     y_Array_Temp.append(y_Array[j])
             data_Training_X = np.concatenate((X_Array_Temp))
             data_Training_y = np.concatenate((y_Array_Temp))
-            Blended_Model = Blend(2, Phi, Chi, N, data_Training_X, data_Training_y,3)
+            Blended_Model = Blend(3, Phi, Chi, N, data_Training_X, data_Training_y,3)
             Models_list.append(Blended_Model)
             M = Build_Models(N, Chi, X_Array[i], y_Array[i])
             G_Matrix = G(M, X_Array[i], len(M), Number_of_algo, 3)
@@ -233,10 +245,10 @@ def BlendingEnsemble(X, y, k, P, N_Bold):
             q = Models_list[i].predict(test_data_new)
             accuracies.append(accuracy_score(y_Array[i],q))
         r_list.append(np.mean(accuracies))
-
+        print r_list
     r_star = r_list.index(np.max(r_list))
     print r_star
-    Output_Model = Blend(2, List_of_inputs[r_star][0], List_of_inputs[r_star][2],List_of_inputs[r_star][1], X, y, 3)
+    Output_Model = Blend(3, List_of_inputs[r_star][0], List_of_inputs[r_star][2],List_of_inputs[r_star][1], X, y, 3)
     return Output_Model
 
 # Phi, N_Bold, Chi = GenParams(P, N)
@@ -244,8 +256,15 @@ def BlendingEnsemble(X, y, k, P, N_Bold):
 # Phi, N_Bold, Chi = GenParams(P, N)
 # Models_list = Blend(2, Chi, N_Bold, data_Training_X, data_Training_y,3)
 # Blend(2, Chi, N_Bold, data_Training_X, data_Training_y, 3)
-BlendingEnsemble(iris.data, iris.target, 3, P, N)
 
 # from sklearn.metric import accuracy
 # q=svm.predict(X)
 # print accuracy(q, y)
+
+
+if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
+    Number_of_algo = 3
+    P = [0.4, 0.4, 0.2]
+    N = 10
+    BlendingEnsemble(iris.data, iris.target, Number_of_algo, P, N)
