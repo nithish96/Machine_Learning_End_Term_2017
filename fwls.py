@@ -12,6 +12,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 import time
+from pprint import pprint
 
 def generate_svm(N_i):
     '''Generate sets of random values of Hyperparameters for SVM Algorithm'''
@@ -63,6 +64,7 @@ def generate_knn(N_i):
     Weights = ['distance', 'uniform'] #Define range of values for Weights
     P = range(1, 5) #Define range of values for P
     Algorithm = ['brute', 'auto', 'ball_tree', 'kd_tree'] #Define range of values for Algorithm
+    Leaf_size = range(20, 40)
     for i in range(1, N_i+1):
     #For the given length of N_i, generate N_i sets of Hyperparameters with values of each parameter picked at random
         dict = {'n_neighbors': N_neighbors[random.randint(0, len(N_neighbors)-1)],
@@ -70,7 +72,7 @@ def generate_knn(N_i):
          'p': P[random.randint(0, len(P)-1)],
          'algorithm': Algorithm[random.randint(0, len(Algorithm)-1)]
          # , 'n_jobs': -1
-         # 'leaf_size': Leaf_size[random.randint(0, len(Leaf_size)-1)]
+         ,'leaf_size': Leaf_size[random.randint(0, len(Leaf_size)-1)]
          }
         params_list.append(dict)
     return params_list #Return the array of dictionaries where each dictionary is a set of Hyperparameters
@@ -237,29 +239,20 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
             q = Models_list[i].predict(test_data_new) #Predict using new test data on the current model
             accuracies.append(1 - accuracy_score(y_Array[i],q)) #Calculate error
         r_list.append(np.mean(accuracies)) #Calculate mean of the error found using Cross Validation
-    print "The errors of each of the models are"
-    print r_list
     r_star = r_list.index(np.min(r_list)) #Find the parameter set where the error is minimum
-    print "The best model is with the error percentage " + str(r_list[r_star]) + " and with the parameters Phi as "+ str(List_of_inputs[r_star][0])
-    print "and with Chi as " + str(List_of_inputs[r_star][2])
-    print "and N as "+ str(List_of_inputs[r_star][1])
+    print "\nThe code is ran with SVM, DT, KNN as base algorithms & XGboost as Blend algorithm on the dataset Iris which has 3 class labels & with R as 3, Levels as 2 & Cross validation of 3 fold."
+    print "\nThe best model is with the error percentage " + str(r_list[r_star])
+    print "and with the parameters Phi as"
+    pprint(List_of_inputs[r_star][0]['params'])
     '''Train the model on the blended algorithm using the min error paramters set'''
     Output_Model = Blend(Number_of_algo, L, List_of_inputs[r_star][0], List_of_inputs[r_star][2],List_of_inputs[r_star][1], X, y)
     return Output_Model #Output the best model
 
 if __name__ == "__main__":
     Number_of_algo = 3
-    P = [0.4, 0.4, 0.2]
-    # N = 10
-    # L = 2
+    P = [0.4, 0.3, 0.3]
+    N = 10
+    L = 2
     cross_validation_times = 3
     iris = datasets.load_iris() #Using the iris dataset
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('-N', type=int, help='Number of Models', default='10')
-    parser.add_argument('-L', type=int, help='Number of Levels', default='2')
-    parser.add_argument('-C', type=int, help='Cross Validation fold k', default='3')
-    args = parser.parse_args()
-    N = int(args.N)
-    L = int(args.L)
-    cross_validation_times = int(args.C)
     BlendingEnsemble(Number_of_algo, L, iris.data, iris.target, cross_validation_times, P, N)

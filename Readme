@@ -1,3 +1,3 @@
-The implementation of the Feature Weighted Linear Stacking is in the file 'fwls.py'. To run the file with default arguments
-run 'make all'. To get help run 'make help'. To change deafult arguments run 'python fwls.py -L <value> -C <value> -N <value>'.
-The arguments P and number of algorithms can not be changed as they are only three base algorithms defined in the code.
+The implementation of the Feature Weighted Linear Stacking is in the file 'fwls.py'. To execute file run 'make all'.
+The code is ran with SVM, DT, KNN as base algorithms & XGboost as Blend algorithm on the dataset Iris which
+has 3 class labels & with R as 3, Levels as 2 & Cross validation of 3 fold. These values can be altered in the 'main' function.
