@@ -5,13 +5,13 @@ import warnings
 warnings.filterwarnings("ignore") #Ignore Deprecation warnings of the paramter min_impurity_split in DecisionTrees
 import random
 import math
+import argparse
 from xgboost.sklearn import XGBClassifier
 from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 import time
-# Ignore Warnings
 
 def generate_svm(N_i):
     '''Generate sets of random values of Hyperparameters for SVM Algorithm'''
@@ -249,8 +249,16 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
 if __name__ == "__main__":
     Number_of_algo = 3
     P = [0.4, 0.4, 0.2]
-    N = 10
-    L = 2
+    # N = 10
+    # L = 2
     cross_validation_times = 3
     iris = datasets.load_iris() #Using the iris dataset
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('-N', type=int, help='Number of Models', default='10')
+    parser.add_argument('-L', type=int, help='Number of Levels', default='2')
+    parser.add_argument('-C', type=int, help='Cross Validation fold k', default='3')
+    args = parser.parse_args()
+    N = int(args.N)
+    L = int(args.L)
+    cross_validation_times = int(args.C)
     BlendingEnsemble(Number_of_algo, L, iris.data, iris.target, cross_validation_times, P, N)
