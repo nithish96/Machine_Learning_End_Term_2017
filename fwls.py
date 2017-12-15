@@ -208,6 +208,7 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
     Now build on the blended algorithm using the entire dataset & the best Hyperparameters obtained from cross validation'''
     r_list = [] #Blended model for each r
     R = 3 #Number of times the loop has to be ran
+    Number_of_classes = 3 #As num of class lables iris dataset has is 3
     List_of_inputs = []
     for r in range(0,R):
         Phi, N, Chi = GenParams(P, N_Bold) #Get Phi, N, Chi
@@ -230,7 +231,7 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
             Models_list.append(Model) #Append all the models created
             '''Build the training data'''
             M = Build_Models(N, Chi, X_Array[i], y_Array[i]) #Build the models for the test data which has been split as a part of the cross validation
-            G_Matrix = G(M, X_Array[i], len(M), Number_of_algo, 3) #Generate G to buid the testing data
+            G_Matrix = G(M, X_Array[i], len(M), Number_of_algo, Number_of_classes) #Generate G to buid the testing data
             F_Matrix = F(G_Matrix, X_Array[i], len(M), Number_of_algo) #Generate F to build the testing data
             test_data_new = np.concatenate((X_Array[i],G_Matrix,F_Matrix),axis=1) #Generate test dataset
             q = Models_list[i].predict(test_data_new) #Predict using new test data on the current model
