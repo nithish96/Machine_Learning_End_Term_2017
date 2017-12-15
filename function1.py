@@ -202,7 +202,7 @@ def cv_split(X, y, k):
     return A, B #Return array of data split into the given k times
 
 def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
-    '''Split the dataset using k-fold cross validation.
+    '''Split the datase8t using k-fold cross validation.
     Use k-1 for training the blended model and the other for testing the blended model.
     And then find the model that gives the minimum error or maximum accuracy using cross validation.
     Now build on the blended algorithm using the entire dataset & the best Hyperparameters obtained from cross validation'''
@@ -236,9 +236,12 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
             q = Models_list[i].predict(test_data_new) #Predict using new test data on the current model
             accuracies.append(1 - accuracy_score(y_Array[i],q)) #Calculate error
         r_list.append(np.mean(accuracies)) #Calculate mean of the error found using Cross Validation
-        print r_list
+    print "The errors of each of the models are"
+    print r_list
     r_star = r_list.index(np.min(r_list)) #Find the parameter set where the error is minimum
-    print r_star
+    print "The best model is with the error percentage " + str(r_list[r_star]) + " and with the parameters Phi as "+ str(List_of_inputs[r_star][0])
+    print "and with Chi as " + str(List_of_inputs[r_star][2])
+    print "and N as "+ str(List_of_inputs[r_star][1])
     '''Train the model on the blended algorithm using the min error paramters set'''
     Output_Model = Blend(Number_of_algo, L, List_of_inputs[r_star][0], List_of_inputs[r_star][2],List_of_inputs[r_star][1], X, y)
     return Output_Model #Output the best model
