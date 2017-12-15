@@ -71,7 +71,6 @@ def generate_knn(N_i):
          'weights': Weights[random.randint(0, len(Weights)-1)],
          'p': P[random.randint(0, len(P)-1)],
          'algorithm': Algorithm[random.randint(0, len(Algorithm)-1)]
-         # , 'n_jobs': -1
          ,'leaf_size': Leaf_size[random.randint(0, len(Leaf_size)-1)]
          }
         params_list.append(dict)
@@ -81,7 +80,6 @@ def generate_xgboost():
     '''Generate Hyperparameters for XGBoost Algorithm'''
     params_list=[]
     Max_depth = range(3, 10 + 1) #Define range of values for Max_depth
-    Booster = ['gbtree', 'gblinear' ] #Define range of values for Booster
     Objective = ['reg:logistic', 'reg:linear', 'binary:logistic'] #Define range of values for Objective
     Min_child_weight = range(1, 6) #Define range of values for Min_child_weight
     Learning_rate = numpy.arange(0, 0.5, 0.001) #Define range of values for learning_rate
@@ -90,7 +88,6 @@ def generate_xgboost():
     dict = {'params': {'max_depth': Max_depth[random.randint(0, len(Max_depth)-1)],
           'min_child_weight': Min_child_weight[random.randint(0, len(Min_child_weight)-1)],
           'gamma': Gamma[random.randint(0, len(Gamma)-1)],
-          # 'booster': Booster[random.randint(0, len(Booster)-1)],
           'objective': Objective[random.randint(0, len(Objective)-1)],
           'learning_rate': Learning_rate[random.randint(0, len(Learning_rate)-1)]}}
     return dict #Return the dictionary of the value of Hyperparameters
@@ -108,12 +105,6 @@ def GenParams(P, N):
     Chi.append(generate_DT(N_i[2])) #Generate parameter sets for base algorithm DT
     Phi = generate_xgboost() #Generate parameters for blend algorithm XGBoost
     return Phi, N_i, Chi #Return Phi, N_i & Chi
-
-def one_hot_encode(A, Dim):
-    '''Do hot encoding on given input matrix A with the given dimensions Dim'''
-    b = np.zeros((len(A),Dim))
-    b[np.arange(len(A)),A] = 1
-    return b #Return the encoded matrix
 
 def G(M, Data, Models_count, Number_of_algo, Number_of_classes):
     '''Generate matrix G'''
@@ -204,7 +195,7 @@ def cv_split(X, y, k):
     return A, B #Return array of data split into the given k times
 
 def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
-    '''Split the datase8t using k-fold cross validation.
+    '''Split the dataset using k-fold cross validation.
     Use k-1 for training the blended model and the other for testing the blended model.
     And then find the model that gives the minimum error or maximum accuracy using cross validation.
     Now build on the blended algorithm using the entire dataset & the best Hyperparameters obtained from cross validation'''
@@ -228,10 +219,10 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
             # concatenate the data that has to be used for training as a part of cross validation
             data_Training_X = np.concatenate((X_Array_Temp))
             data_Training_y = np.concatenate((y_Array_Temp))
-            #build model using the current paramters and cross validated train data
+            #build model using the current parameters and cross validated train data
             Model = Blend(Number_of_algo, L, Phi, Chi, N, data_Training_X, data_Training_y)
             Models_list.append(Model) #Append all the models created
-            '''Build the training data'''
+            '''Addding new features for F(t)'''
             M = Build_Models(N, Chi, X_Array[i], y_Array[i]) #Build the models for the test data which has been split as a part of the cross validation
             G_Matrix = G(M, X_Array[i], len(M), Number_of_algo, Number_of_classes) #Generate G to buid the testing data
             F_Matrix = F(G_Matrix, X_Array[i], len(M), Number_of_algo) #Generate F to build the testing data
@@ -240,7 +231,7 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
             accuracies.append(1 - accuracy_score(y_Array[i],q)) #Calculate error
         r_list.append(np.mean(accuracies)) #Calculate mean of the error found using Cross Validation
     r_star = r_list.index(np.min(r_list)) #Find the parameter set where the error is minimum
-    print "\nThe code is ran with SVM, DT, KNN as base algorithms & XGboost as Blend algorithm on the dataset Iris which has 3 class labels & with R as 3, Levels as 2 & Cross validation of 3 fold."
+    print "\nThe code is ran with SVM, DT, KNN as base algorithms & XGboost as Blend algorithm on the dataset Iris which has 3 class labels & with R value as 3, Levels as 2 & Cross validation of 3 fold."
     print "\nThe best model is with the error percentage " + str(r_list[r_star])
     print "and with the parameters Phi as"
     pprint(List_of_inputs[r_star][0]['params'])
@@ -249,10 +240,12 @@ def BlendingEnsemble(Number_of_algo, L, X, y, k, P, N_Bold):
     return Output_Model #Output the best model
 
 if __name__ == "__main__":
-    Number_of_algo = 3
-    P = [0.4, 0.3, 0.3]
-    N = 10
-    L = 2
-    cross_validation_times = 3
+    '''The code is ran with SVM, DT, KNN as base algorithms & XGboost as Blend algorithm on the dataset Iris which
+    has 3 class labels & with R value as 3, Levels as 2 & Cross validation of 3 fold. These values can be altered in the variables.'''
+    Number_of_algo = 3 #Number of Algorithms used
+    P = [0.4, 0.3, 0.3]  #Preference Array for the algorithms
+    N = 10 #Number of Models
+    L = 2 #Number of levels
+    cross_validation_times = 3  #Number of folds
     iris = datasets.load_iris() #Using the iris dataset
-    BlendingEnsemble(Number_of_algo, L, iris.data, iris.target, cross_validation_times, P, N)
+    Final_Model = BlendingEnsemble(Number_of_algo, L, iris.data, iris.target, cross_validation_times, P, N)

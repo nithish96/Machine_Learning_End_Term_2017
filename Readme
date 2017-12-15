@@ -1,3 +1,3 @@
 The implementation of the Feature Weighted Linear Stacking is in the file 'fwls.py'. To execute file run 'make all'.
 The code is ran with SVM, DT, KNN as base algorithms & XGboost as Blend algorithm on the dataset Iris which
-has 3 class labels & with R as 3, Levels as 2 & Cross validation of 3 fold. These values can be altered in the 'main' function.
+has 3 class labels & with R value as 3, Levels as 2 & Cross validation of 3 fold. These values can be altered in the 'main' function.
